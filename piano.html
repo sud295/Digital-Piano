@@ -19,14 +19,6 @@
         text-align: center;
     }
 
-    h1 {
-        margin-bottom: 6px;
-    }
-    .subtitle {
-        opacity: 0.75;
-        margin-bottom: 16px;
-    }
-
     .piano {
         width: 700px;
         height: 240px;
@@ -50,7 +42,6 @@
         display: grid;
         grid-template-columns: repeat(7, 1fr);
         height: 100%;
-        gap: 0;
         position: relative;
         z-index: 1;
     }
@@ -60,7 +51,6 @@
         border: 1px solid #444;
         border-bottom: 4px solid #333;
         border-radius: 0 0 6px 6px;
-        position: relative;
         display: flex;
         justify-content: center;
         align-items: flex-end;
@@ -87,25 +77,19 @@
         color: #eee;
         padding-top: 5px;
         box-shadow: 0 4px 6px rgba(0,0,0,0.8);
-        user-select: none;
     }
 
     .key.black.active {
         background: linear-gradient(#555, #111);
-    }
-
-    .label {
-        pointer-events: none;
     }
 </style>
 </head>
 <body>
 <div class="piano-wrapper">
     <h1>Digital Piano</h1>
-    <!-- <div class="subtitle">Click keys or use Z S X D C V G B H N J M</div> -->
 
     <div class="piano">
-        <div class="keybed" id="keybed">
+        <div class="keybed">
 
             <div class="white-keys">
                 <div class="key white" data-note="C4">C4 (Z)</div>
@@ -119,7 +103,6 @@
 
             <div class="key black" data-note="C#4" style="left: 11.5%;">C#4</div>
             <div class="key black" data-note="D#4" style="left: 25.7%;">D#4</div>
-
             <div class="key black" data-note="F#4" style="left: 54.4%;">F#4</div>
             <div class="key black" data-note="G#4" style="left: 68.5%;">G#4</div>
             <div class="key black" data-note="A#4" style="left: 82.6%;">A#4</div>
@@ -140,60 +123,117 @@ const freq = {
 };
 
 const keyboard = {
-  z:"C4", s:"C#4", x:"D4", d:"D#4", c:"E4", v:"F4",
-  g:"F#4", b:"G4", h:"G#4", n:"A4", j:"A#4", m:"B4"
+  "=": "C4",
+  ";": "C#4",
+  "[": "D4",
+  "]": "D#4",
+  "`": "E4",
+  "\\": "F4",
+  "arrowup": "F#4",
+  "arrowdown": "G4",
+  "arrowright": "G#4",
+  "arrowleft": "A4",
+  0: "A#4",
+  2: "B4"
 };
 
 let active = {};
 
+window.addEventListener("mousedown", e => {
+    const note = keyboard[e.button];
+    if (!keyboard[e.button]) return;
+    if (down.has(e.button)) return;
+
+    down.add(e.button);
+
+    play(note);
+    highlight(note);
+});
+
+window.addEventListener("mouseup", e => {
+    const note = keyboard[e.button];
+    if (!keyboard[e.button]) return;
+
+    down.delete(e.button);
+
+    stop(note);
+    unhighlight(note);
+});
+
+document.addEventListener('contextmenu', function (e){
+  e.preventDefault();
+});
+
+window.onload = function(){
+  document.onselectstart = function(){
+    return false;
+  }
+}
+
 function play(note) {
-  if(!unlocked){audio.resume(); unlocked=true;}
-  if(active[note]) return;
-  let o = audio.createOscillator();
-  let g = audio.createGain();
-  o.frequency.value = freq[note];
-  o.type = "sine";
-  g.gain.setValueAtTime(0, audio.currentTime);
-  g.gain.linearRampToValueAtTime(0.8, audio.currentTime+0.01);
-  o.connect(g).connect(audio.destination);
-  o.start();
-  active[note] = { o, g };
+  if (!unlocked) { audio.resume(); unlocked = true; }
+  if (active[note]) return;
+
+  let osc = audio.createOscillator();
+  let gain = audio.createGain();
+
+  osc.frequency.value = freq[note];
+  osc.type = "sine";
+
+  gain.gain.setValueAtTime(0, audio.currentTime);
+  gain.gain.linearRampToValueAtTime(0.8, audio.currentTime + 0.01);
+
+  osc.connect(gain).connect(audio.destination);
+  osc.start();
+
+  active[note] = { osc, gain };
 }
 
 function stop(note) {
-  if(!active[note]) return;
-  let {o,g}=active[note];
-  g.gain.linearRampToValueAtTime(0, audio.currentTime+0.05);
-  o.stop(audio.currentTime+0.06);
+  if (!active[note]) return;
+
+  let { osc, gain } = active[note];
+  gain.gain.linearRampToValueAtTime(0, audio.currentTime + 0.05);
+  osc.stop(audio.currentTime + 0.06);
+
   delete active[note];
 }
 
-function highlight(n){document.querySelector(`[data-note='${n}']`).classList.add("active")}
-function unhighlight(n){document.querySelector(`[data-note='${n}']`).classList.remove("active")}
+/* ---------------- VISUAL HIGHLIGHT ---------------- */
+function highlight(n) {
+  const el = document.querySelector(`[data-note="${n}"]`);
+  if (el) el.classList.add("active");
+}
 
-const keys = document.querySelectorAll(".key");
-keys.forEach(k=>{
-  const n = k.dataset.note;
-  k.onmousedown = () => { play(n); highlight(n); };
-  k.onmouseup   = () => { stop(n); unhighlight(n); };
-  k.onmouseleave= (e)=> { if(e.buttons===1){ stop(n); unhighlight(n); } };
-});
+function unhighlight(n) {
+  const el = document.querySelector(`[data-note="${n}"]`);
+  if (el) el.classList.remove("active");
+}
 
+/* ---------------- KEYBOARD ONLY ---------------- */
 const down = new Set();
-window.onkeydown = (e)=>{
-  let key=e.key.toLowerCase();
-  if(!keyboard[key]) return;
-  if(down.has(key)) return;
+
+window.onkeydown = e => {
+  const key = e.key.toLowerCase();
+  if (!keyboard[key]) return;
+  if (down.has(key)) return;
+
   down.add(key);
-  let n=keyboard[key];
-  play(n); highlight(n);
+
+  const note = keyboard[key];
+  play(note);
+  highlight(note);
 };
-window.onkeyup = (e)=>{
-  let key=e.key.toLowerCase();
-  if(!keyboard[key]) return;
+
+window.onkeyup = e => {
+  const key = e.key.toLowerCase();
+  if (!keyboard[key]) return;
+
   down.delete(key);
-  let n=keyboard[key];
-  stop(n); unhighlight(n);
+
+  const note = keyboard[key];
+  stop(note);
+  unhighlight(note);
 };
 </script>
 </body>
