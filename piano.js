@@ -41,7 +41,7 @@ let gameState = {
 };
 
 function checkGamemodeCombo() {
-  if (down.has("arrowright") && down.has(";")) {
+  if (down.has("arrowleft") && down.has(2)) {
     if (!comboTimer) {
       comboStartTime = Date.now();
       comboTimer = setTimeout(() => {
@@ -89,7 +89,7 @@ function closeGamemode() {
 function startListenAndPlay() {
   closeGamemode();
   
-  const melodyLength = Math.floor(Math.random() * 5) + 4;
+  const melodyLength = 5;
   const notes = Object.keys(freq);
   gameState.melody = [];
   
@@ -225,6 +225,8 @@ window.addEventListener("mousedown", e => {
 
     play(note);
     highlight(note);
+    
+    handleGameInput(note);
 });
 
 window.addEventListener("mouseup", e => {
@@ -246,7 +248,6 @@ window.onload = function(){
     return false;
   }
 }
-
 
 function play(note) {
   if (!unlocked) { audio.resume(); unlocked = true; }
