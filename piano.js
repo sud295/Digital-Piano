@@ -42,7 +42,7 @@ let gameState = {
 
 function checkGamemodeCombo() {
   if (down.has("arrowleft") && down.has(2)) {
-    if (!comboTimer) {
+    if (!comboTimer){
       comboStartTime = Date.now();
       comboTimer = setTimeout(() => {
         openGamemode();
@@ -50,7 +50,7 @@ function checkGamemodeCombo() {
       }, 3000);
     }
   } else {
-    if (comboTimer) {
+    if (comboTimer){
       clearTimeout(comboTimer);
       comboTimer = null;
       comboStartTime = null;
@@ -58,12 +58,12 @@ function checkGamemodeCombo() {
   }
 }
 
-function checkToneCombo() {
+function checkToneCombo(){
   const hasC = !!active["C4"];
   const hasD = !!active["D4"];
 
-  if (hasC && hasD) {
-    if (!toneTimer) {
+  if (hasC && hasD){
+    if (!toneTimer){
       toneTimer = setTimeout(() => {
         waveType = (waveType === "sine") ? "square" : "sine";
         console.log("Wave type toggled to:", waveType);
@@ -141,7 +141,7 @@ function handleGameInput(note) {
   
   gameState.playerInput.push(note);
   
-  if (gameState.playerInput.length >= gameState.melody.length) {
+  if (gameState.playerInput.length >= gameState.melody.length){
     endGame();
   }
 }
@@ -174,7 +174,7 @@ function showResults(results, correct, total) {
   const modal = document.getElementById('resultsModal');
   const resultsDiv = document.getElementById('resultsContent');
   
-  let html = `<h3>Score: ${correct}/${total} (${Math.round(correct/total * 100)}%)</h3>`;
+  let html = `<h3>Score: ${correct}/${total} (${Math.round(correct/total*100)}%)</h3>`;
   html += '<div style="text-align: left; margin-top: 20px;">';
   
   results.forEach(r => {
@@ -225,7 +225,7 @@ window.addEventListener("mousedown", e => {
 
     play(note);
     highlight(note);
-    
+
     handleGameInput(note);
 });
 
@@ -284,12 +284,16 @@ function stop(note) {
 
 function highlight(n) {
   const el = document.querySelector(`[data-note="${n}"]`);
-  if (el) el.classList.add("active");
+  if (el){
+    el.classList.add("active");
+  }
 }
 
 function unhighlight(n) {
   const el = document.querySelector(`[data-note="${n}"]`);
-  if (el) el.classList.remove("active");
+  if (el){
+    el.classList.remove("active");
+  }
 }
 
 window.onkeydown = e => {
@@ -313,9 +317,7 @@ window.onkeydown = e => {
 window.onkeyup = e => {
   const key = e.key.toLowerCase();
   if (!keyboard[key]) return;
-
   down.delete(key);
-
   const note = keyboard[key];
   stop(note);
   unhighlight(note);
