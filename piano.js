@@ -4,12 +4,14 @@ let unlocked = false;
 
 let waveType = "sine";
 
+// Frequencies for the different keys
 const freq = {
   "C4":261.63,"C#4":277.18,"D4":293.66,"D#4":311.13,"E4":329.63,
   "F4":349.23,"F#4":369.99,"G4":392.00,"G#4":415.30,"A4":440.00,
   "A#4":466.16,"B4":493.88
 };
 
+// Mapping makey makey to the frequencies
 const keyboard = {
   "=": "C4",
   ";": "C#4",
@@ -25,11 +27,12 @@ const keyboard = {
   2: "B4"
 }
 
+// for game activity
 let active = {};
+// Set of all the keys being pressed
 const down = new Set();
 let comboTimer = null;
 let comboStartTime = null;
-
 let toneTimer = null;
 
 let gameState = {
@@ -40,6 +43,7 @@ let gameState = {
   currentNote: 0
 };
 
+// This checks to see if the user wants to play the game. Has to press for 3 seconds.
 function checkGamemodeCombo() {
   if (down.has("arrowleft") && down.has(2)) {
     if (!comboTimer){
@@ -58,7 +62,8 @@ function checkGamemodeCombo() {
   }
 }
 
-function checkToneCombo(){
+// This checks to see if the user wants to change tone. Has to press for 3 seconds.
+function checkToneCombo() {
   const hasC = !!active["C4"];
   const hasD = !!active["D4"];
 
@@ -66,7 +71,6 @@ function checkToneCombo(){
     if (!toneTimer){
       toneTimer = setTimeout(() => {
         waveType = (waveType === "sine") ? "square" : "sine";
-        console.log("Wave type toggled to:", waveType);
         toneTimer = null;
       }, 3000);
     }
@@ -110,6 +114,7 @@ function startListenAndPlay() {
 }
 
 function playMelody() {
+  // Checks if it's done playing
   if (gameState.currentNote >= gameState.melody.length) {
     gameState.phase = 'play';
     gameState.currentNote = 0;
@@ -122,7 +127,7 @@ function playMelody() {
   
   const note = gameState.melody[gameState.currentNote];
   
-  highlight(note);
+  highlight(note); // We can turn this off if we want, but I think perfect pitch may be too hard to do without at least some help
   play(note);
   
   setTimeout(() => {
@@ -178,7 +183,7 @@ function showResults(results, correct, total) {
   html += '<div style="text-align: left; margin-top: 20px;">';
   
   results.forEach(r => {
-    const icon = r.correct ? '✓' : '✗';
+    const icon = r.correct ? 'Correct' : 'Wrong';
     const color = r.correct ? '#70f470' : '#ff5555';
     html += `
       <div style="padding: 10px; margin: 5px 0; background: #333; border-radius: 6px; border-left: 4px solid ${color};">
@@ -216,6 +221,7 @@ function hideGameOverlay() {
   document.getElementById('gameOverlay').classList.remove('show');
 }
 
+// the mouse ones are weird so these need to be added manually
 window.addEventListener("mousedown", e => {
     const note = keyboard[e.button];
     if (!keyboard[e.button]) return;
@@ -239,15 +245,6 @@ window.addEventListener("mouseup", e => {
     unhighlight(note);
 });
 
-document.addEventListener('contextmenu', function (e){
-  e.preventDefault();
-});
-
-window.onload = function(){
-  document.onselectstart = function(){
-    return false;
-  }
-}
 
 function play(note) {
   if (!unlocked) { audio.resume(); unlocked = true; }
