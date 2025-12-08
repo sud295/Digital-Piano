@@ -2,6 +2,7 @@ const AudioContext = window.AudioContext || window.webkitAudioContext;
 const audio = new AudioContext();
 let unlocked = false;
 
+// This can be toggled to square
 let waveType = "sine";
 
 // Frequencies for the different keys
@@ -23,6 +24,7 @@ const keyboard = {
   "arrowdown": "G4",
   "arrowright": "G#4",
   "arrowleft": "A4",
+  // mouse keys
   0: "A#4",
   2: "B4"
 }
@@ -142,7 +144,9 @@ function playMelody() {
 }
 
 function handleGameInput(note) {
-  if (!gameState.active || gameState.phase !== 'play') return;
+  if(!gameState.active || gameState.phase !== 'play'){
+    return;
+  }
   
   gameState.playerInput.push(note);
   
@@ -157,12 +161,15 @@ function endGame() {
   let correct = 0;
   let results = [];
   
+  //compute the score/results here
   for (let i = 0; i < gameState.melody.length; i++) {
     const expected = gameState.melody[i];
     const played = gameState.playerInput[i] || 'missed';
     const isCorrect = expected === played;
     
-    if (isCorrect) correct++;
+    if (isCorrect){ 
+      correct++;
+    }
     
     results.push({
       position: i + 1,
@@ -232,6 +239,7 @@ window.addEventListener("mousedown", e => {
     play(note);
     highlight(note);
 
+    // source of bug preventing mouse clicks from being registered in game mode
     handleGameInput(note);
 });
 
@@ -262,7 +270,7 @@ function play(note) {
   osc.connect(gain).connect(audio.destination);
   osc.start();
 
-  active[note] = { osc, gain };
+  active[note] = {osc, gain};
 
   checkToneCombo();
 }
@@ -273,9 +281,7 @@ function stop(note) {
   let { osc, gain } = active[note];
   gain.gain.linearRampToValueAtTime(0, audio.currentTime + 0.05);
   osc.stop(audio.currentTime + 0.06);
-
   delete active[note];
-
   checkToneCombo();
 }
 
